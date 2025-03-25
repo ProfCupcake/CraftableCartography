@@ -82,5 +82,16 @@ namespace CraftableCartography.Patches
                 }
             }
         }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GuiElementMap), nameof(GuiElementMap.OnKeyDown))]
+        public static bool SpaceBarPressedCheck(GuiElementMap __instance, ICoreClientAPI api, KeyEvent args)
+        {
+            if (args.KeyCode == 51)
+            {
+                if (!HasJPS(api.World.Player)) return false;
+            }
+            return true;
+        }
     }
 }

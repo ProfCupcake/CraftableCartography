@@ -5,6 +5,7 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 using static CraftableCartography.Lib.CCConstants;
+using static CraftableCartography.Lib.ItemChecks;
 
 namespace CraftableCartography.Patches
 {
@@ -67,8 +68,13 @@ namespace CraftableCartography.Patches
                             {
                                 if (capi.World.Player.Entity != null)
                                 {
-                                    Vec3d playerPos = capi.World.Player.Entity.Pos.XYZ;
-                                    traverse.Field("prevPlayerPos").GetValue<Vec3d>().Set(playerPos.X, playerPos.Y, playerPos.Z);
+                                    MapChecker mapChecker = capi.ModLoader.GetModSystem<MapChecker>();
+
+                                    if (!HasJPS(capi.World.Player))
+                                    {
+                                        Vec3d playerPos = capi.World.Player.Entity.Pos.XYZ;
+                                        traverse.Field("prevPlayerPos").GetValue<Vec3d>().Set(playerPos.X, playerPos.Y, playerPos.Z);
+                                    }
                                 }
                             }
                         }

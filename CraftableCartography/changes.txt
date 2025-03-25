@@ -1,3 +1,1 @@
-- Fix: JPS & channel requirement to see other players on map should work now
-- Increased compass damping slightly
-- Added degrees symbol to compass display
+- Fix: map now continues to track player if you have a JPS

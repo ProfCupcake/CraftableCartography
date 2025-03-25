@@ -26,11 +26,13 @@
     },
     "K": {
       "type": "item",
-      "code": "game:knife-*"
+      "code": "game:knife-*",
+      "isTool": true
     },
     "W": {
       "type": "item",
-      "code": "game:wrench-*"
+      "code": "game:wrench-*",
+      "isTool": true
     },
     "G": {
       "type": "item",

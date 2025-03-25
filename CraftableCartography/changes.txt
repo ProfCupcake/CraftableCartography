@@ -2,3 +2,4 @@
 - You can no longer recentre the map on your position by pressing space unless you have a JPS
 - Prospecting pick mechanics updated: you must now manually enter the coordinates of a reading unless you have a JPS
 - Added .recentermap as an alias of .recentremap
+- Fix: JPS recipe no longer consumes the knife and wrench

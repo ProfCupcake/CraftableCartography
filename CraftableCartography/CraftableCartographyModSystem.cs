@@ -5,6 +5,7 @@ using HarmonyLib;
 using Newtonsoft.Json;
 using ProtoBuf;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Vintagestory.API.Client;
@@ -28,6 +29,8 @@ namespace CraftableCartography
         ICoreClientAPI capi;
         ICoreServerAPI sapi;
 
+        Dictionary<IServerPlayer, PropickReading> LastPropickReading;
+
         Harmony harmony;
         public override void StartPre(ICoreAPI api)
         {
@@ -44,6 +47,8 @@ namespace CraftableCartography
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
+
+            LastPropickReading = new();
 
             api.RegisterItemClass("compass", typeof(Compass));
             api.RegisterItemClass("sextant", typeof(Sextant));
@@ -62,6 +67,33 @@ namespace CraftableCartography
                 .SetMessageHandler<SetChannelPacket>(SetChannelCommandServer);
 
             sapi.Event.RegisterGameTickListener(ServerJPSCheck, 5000);
+
+            sapi.ChatCommands.Create("setreading")
+                .WithAlias("sr")
+                .WithDescription("Set the coordinates of your last prospecting pick reading to add it to the map")
+                .RequiresPlayer()
+                .WithArgs(sapi.ChatCommands.Parsers.Int("x"), sapi.ChatCommands.Parsers.Int("y"), sapi.ChatCommands.Parsers.Int("z"))
+                .RequiresPrivilege(Privilege.chat)
+                .HandleWith(SetReadingCommand);
+        }
+
+        private TextCommandResult SetReadingCommand(TextCommandCallingArgs args)
+        {
+            int x = (int)args[0];
+            int y = (int)args[1];
+            int z = (int)args[2];
+
+            BlockPos pos = new BlockPos(x,y,z);
+
+            pos.Add(api.World.DefaultSpawnPosition.AsBlockPos);
+            
+            if (AddLastReadingToMap((IServerPlayer)args.Caller.Player, pos))
+            {
+                return TextCommandResult.Success($"Added last ProPick reading to map at {x}, {y}, {z}");
+            } else
+            {
+                return TextCommandResult.Error("No reading to add!");
+            }
         }
 
         private void ServerJPSCheck(float dt)
@@ -159,6 +191,31 @@ namespace CraftableCartography
         {
             if (File.Exists(dataPath)) return JsonConvert.DeserializeObject<SavedPositions>(File.ReadAllText(dataPath));
             return new SavedPositions(api);
+        }
+
+        public void StoreLastReading(IServerPlayer player, PropickReading reading)
+        {
+            LastPropickReading[player] = reading;
+        }
+
+        public bool AddLastReadingToMap(IServerPlayer player, BlockPos pos)
+        {
+            PropickReading reading = LastPropickReading[player];
+
+            if (reading == null) return false;
+
+            reading.Position = pos.ToVec3d();
+
+            ModSystemOreMap modSystem = api.ModLoader.GetModSystem<ModSystemOreMap>(true);
+            if (modSystem == null)
+            {
+                return false;
+            }
+            modSystem.DidProbe(reading, player);
+
+            LastPropickReading[player] = null;
+
+            return true;
         }
     }
 }

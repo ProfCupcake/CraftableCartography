@@ -113,6 +113,7 @@ namespace CraftableCartography
             capi = api;
 
             api.ChatCommands.Create("recentremap")
+                .WithAlias("recentermap")
                 .WithDescription("Recentres your map on the given coordinates")
                 .RequiresPlayer()
                 .WithArgs(new ICommandArgumentParser[] { api.ChatCommands.Parsers.OptionalInt("x"), api.ChatCommands.Parsers.OptionalInt("y"), api.ChatCommands.Parsers.OptionalInt("z") })

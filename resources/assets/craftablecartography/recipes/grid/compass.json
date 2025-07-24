@@ -13,7 +13,7 @@
     },
     "B": {
       "type": "block",
-      "code": "game:bowl-fired"
+      "code": "game:bowl-*-fired"
     },
     "P": {
       "type": "item",

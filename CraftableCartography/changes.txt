@@ -2,3 +2,4 @@
 - Fixed benign error regarding JPS model
 - Fixed sextant behaviour while moving
 - Added a "primitive compass", which just shows one of the 4 cardinal directions
+- Compass movement now continues when you're not actively using it (you still need to use it to read it)

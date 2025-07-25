@@ -1,5 +1,4 @@
-- Fix: map now continues to track player movement if you have a JPS
-- You can no longer recentre the map on your position by pressing space unless you have a JPS
-- Prospecting pick mechanics updated: you must now manually enter the coordinates of a reading unless you have a JPS
-- Added .recentermap as an alias of .recentremap
-- Fix: JPS recipe no longer consumes the knife and wrench
+- Owned elk (etc.?) now hidden unless you have a JPS
+- Fixed benign error regarding JPS model
+- Fixed sextant behaviour while moving
+- Added a "primitive compass", which just shows one of the 4 cardinal directions

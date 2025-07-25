@@ -54,7 +54,7 @@ namespace CraftableCartography.Items.Compass
                 while (heading < 0) heading += 360;
                 while (heading > 360) heading -= 360;
 
-                string word = "\n";
+                string word = "";
                 if (heading < 67.5 || heading > 292.5)
                 {
                     word += "N";
@@ -73,7 +73,9 @@ namespace CraftableCartography.Items.Compass
                     word += "W";
                 }
 
-                string text = Math.Round(heading).ToString() + "°";
+                string text = "";
+
+                if (Code.FirstCodePart() == "compass") text += Math.Round(heading).ToString() + "°\n";
                 text += word;
 
                 gui.SetText(text);

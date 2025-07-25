@@ -1,4 +1,7 @@
 {
+  "item-compassprimitive-*": "Primitive Compass",
+  "itemdesc-compassprimitive-*": "Use to see your general heading. Takes a second or two for the lodestone to spin to position.",
+
   "item-compass-*": "Compass",
   "itemdesc-compass-*": "Use to see your heading. Takes a second or two for the needle to spin to position.",
 

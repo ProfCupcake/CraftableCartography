@@ -15,7 +15,7 @@ namespace CraftableCartography.Patches
     class MapLayerPatches
     {
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(OwnedEntityMapLayer), nameof(OwnedEntityMapLayer.Render)]
+        [HarmonyPatch(typeof(OwnedEntityMapLayer), nameof(OwnedEntityMapLayer.Render))]
         public static bool OwnedEntityMapLayerCheck(OwnedEntityMapLayer __instance)
         {
             ICoreClientAPI capi = Traverse.Create(__instance).Field("capi").GetValue<ICoreClientAPI>();

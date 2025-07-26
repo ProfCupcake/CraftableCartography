@@ -2,6 +2,6 @@
 {
     public class CraftableCartographyModConfig
     {
-        public bool AllowMapOpeningWithoutTool = true;
+        public bool AllowMapOpeningWithoutTool = false;
     }
 }

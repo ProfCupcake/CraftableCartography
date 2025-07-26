@@ -107,5 +107,18 @@ namespace CraftableCartography.Items.Compass
         {
             DoMoveStep(byEntity);
         }
+
+        public override bool ConsumeCraftingIngredients(ItemSlot[] slots, ItemSlot outputSlot, GridRecipe matchingRecipe)
+        {
+            if (Code.FirstCodePart() == "compassprimitive")
+            {
+                foreach (ItemSlot slot in slots)
+                {
+                    slot.TakeOut(1);
+                }
+            }
+            
+            return true;
+        }
     }
 }

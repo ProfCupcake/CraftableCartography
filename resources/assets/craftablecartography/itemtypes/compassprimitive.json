@@ -9,7 +9,8 @@
     "base": "craftablecartography:compass"
   },
   "textures": {
-    "tinbronze": { "base": "game:block/clay/ceramic" }
+    "tinbronze": { "base": "game:block/clay/ceramic" },
+    "smoky": {"base": "game:block/liquid/waterportion"}
   },
   "guiTransform": {
     "translation": {

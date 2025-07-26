@@ -1,0 +1,28 @@
+{
+  "ingredientPattern": "N,B",
+  "width": 1,
+  "height": 2,
+  "ingredients": {
+    "N": {
+      "type": "item",
+      "code": "game:nugget-*"
+    },
+    "B": {
+      "type": "block",
+      "code": "game:bowl-*-fired"
+    }
+  },
+  "attributes": {
+    "liquidContainerProps": {
+      "requiresContent": {
+        "type": "item",
+        "code": "waterportion"
+      },
+      "requiresLitres": 1
+    }
+  },
+  "output": {
+    "type": "item",
+    "code": "compassprimitive"
+  }
+}

@@ -48,9 +48,11 @@ namespace CraftableCartography.Items.Sextant
         {
             if (byEntity.Api.Side == EnumAppSide.Client)
             {
-                moveVar += lastPos.DistanceTo(byEntity.Pos) * 2;
+                double posDiff = lastPos.DistanceTo(byEntity.Pos);
 
-                double varThisStep = (float)Math.Min(maxVar / Math.Pow(secondsUsed - moveVar, 5), maxVar);
+                if (posDiff > 0.1) moveVar += posDiff * 2;
+
+                double varThisStep = (float)Math.Min(maxVar / Math.Pow(Math.Max(secondsUsed - moveVar, 1), 5), maxVar);
 
                 randomX.avg = (float)(byEntity.Pos.X - api.World.DefaultSpawnPosition.X);
                 randomY.avg = (float)byEntity.Pos.Y;

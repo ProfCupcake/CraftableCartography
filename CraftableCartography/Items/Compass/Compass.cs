@@ -14,12 +14,13 @@ namespace CraftableCartography.Items.Compass
     public class Compass : Item
     {
         HudElementNavReading gui;
+        HudCompassNeedleRenderer needleRenderer;
 
         float heading;
         float headingDelta;
 
-        float damping = 0.92f;
-        float accelerationMult = 4f;
+        float damping = 0.96f;
+        float accelerationMult = 6f;
 
         long lastUpdate;
 
@@ -30,6 +31,9 @@ namespace CraftableCartography.Items.Compass
                 gui ??= new((ICoreClientAPI)byEntity.Api);
                 gui.TryOpen();
                 gui.SetText(GetText());
+
+                needleRenderer = new((ICoreClientAPI)byEntity.Api);
+                needleRenderer.heading = heading;
             }
             
             handling = EnumHandHandling.PreventDefault;
@@ -92,6 +96,8 @@ namespace CraftableCartography.Items.Compass
                 DoMoveStep(byEntity);
 
                 gui.SetText(GetText());
+
+                needleRenderer.heading = heading;
             }
 
             return true;
@@ -100,7 +106,12 @@ namespace CraftableCartography.Items.Compass
         public override void OnHeldInteractStop(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
         {
             if (byEntity.Api.Side == EnumAppSide.Client)
+            {
                 gui.TryClose();
+
+                needleRenderer.Dispose();
+                needleRenderer = null;
+            }
         }
 
         public override void OnHeldIdle(ItemSlot slot, EntityAgent byEntity)

@@ -1,6 +1,5 @@
-- Owned elk (etc.?) now hidden unless you have a JPS
-- Fixed benign error regarding JPS model
-- Fixed sextant behaviour while moving
-- Added a "primitive compass", which just shows the cardinal direction
-- Compass movement now continues when you're not actively using it (you still need to use it to read it)
-- Also fixed an oversight in the compass movement causing inconsistent behaviour
+New alternative mechanic. 
+
+Instead of denying the opening of the (mini)map without the relevant items, it will instead simply not render the terrain. 
+
+This can be toggled in the config. 

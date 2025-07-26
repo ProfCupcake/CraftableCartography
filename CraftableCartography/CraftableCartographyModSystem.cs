@@ -1,4 +1,5 @@
-﻿using CraftableCartography.Items.Compass;
+﻿using CraftableCartography.Config;
+using CraftableCartography.Items.Compass;
 using CraftableCartography.Items.Sextant;
 using CraftableCartography.Lib;
 using HarmonyLib;
@@ -21,6 +22,8 @@ namespace CraftableCartography
 {
     public partial class CraftableCartographyModSystem : ModSystem
     {
+        public ConfigManager<CraftableCartographyModConfig> Config;
+        
         private string dataPath;
 
         public const string patchName = "com.profcupcake.craftablecartography";
@@ -55,6 +58,8 @@ namespace CraftableCartography
 
             api.Network.RegisterChannel(NetChannel)
                 .RegisterMessageType<SetChannelPacket>();
+
+            Config = new(api, "craftablecartography");
         }
 
         public override void StartServerSide(ICoreServerAPI api)

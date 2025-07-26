@@ -38,7 +38,7 @@ namespace CraftableCartography.Patches
                     }
                 }
             }
-            
+
             GuiElementMap elemMap = __instance.SingleComposer.GetElement("mapElem") as GuiElementMap;
 
             SavedPositions saved = capi.ModLoader.GetModSystem<CraftableCartographyModSystem>().LoadMapPos();

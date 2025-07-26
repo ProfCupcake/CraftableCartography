@@ -22,5 +22,14 @@ namespace CraftableCartography.Patches
 
             return HasJPS(capi.World.Player);
         }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(ChunkMapLayer), nameof(ChunkMapLayer.Render))]
+        public static bool ChunkMapLayerCheck(ChunkMapLayer __instance)
+        {
+            ICoreClientAPI capi = Traverse.Create(__instance).Field("capi").GetValue<ICoreClientAPI>();
+
+            return HasMap(capi.World.Player) || HasJPS(capi.World.Player);
+        }
     }
 }

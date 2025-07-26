@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CraftableCartography.Config;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
 using static CraftableCartography.Lib.ItemChecks;
 
@@ -14,6 +9,14 @@ namespace CraftableCartography
     public class MapChecker : ModSystem
     {
         ICoreClientAPI capi;
+
+        CraftableCartographyModConfig ModConfig
+        {
+            get
+            {
+                return capi.ModLoader.GetModSystem<CraftableCartographyModSystem>().Config.modConfig;
+            }
+        }
 
         public override void StartClientSide(ICoreClientAPI api)
         {
@@ -35,7 +38,8 @@ namespace CraftableCartography
                     {
                         map.TryClose();
                     }
-                } else if (map.DialogType == EnumDialogType.Dialog)
+                }
+                else if (map.DialogType == EnumDialogType.Dialog)
                 {
                     if (!IsMapAllowed())
                     {
@@ -47,12 +51,12 @@ namespace CraftableCartography
 
         public bool IsMinimapAllowed()
         {
-            return HasJPS(capi.World.Player);
+            return ModConfig.AllowMapOpeningWithoutTool || HasJPS(capi.World.Player);
         }
 
         public bool IsMapAllowed()
         {
-            return (HasMap(capi.World.Player) || HasJPS(capi.World.Player));
+            return ModConfig.AllowMapOpeningWithoutTool || HasMap(capi.World.Player) || HasJPS(capi.World.Player);
         }
     }
 }

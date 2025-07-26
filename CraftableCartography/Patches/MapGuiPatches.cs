@@ -20,7 +20,6 @@ namespace CraftableCartography.Patches
 
             ICoreClientAPI capi = traverse.Field("capi").GetValue<ICoreClientAPI>();
 
-            /*
             MapChecker mapChecker = capi.ModLoader.GetModSystem<MapChecker>();
 
             if (mapChecker != null)
@@ -39,7 +38,6 @@ namespace CraftableCartography.Patches
                     }
                 }
             }
-            */
 
             GuiElementMap elemMap = __instance.SingleComposer.GetElement("mapElem") as GuiElementMap;
 

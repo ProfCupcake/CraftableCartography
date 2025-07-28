@@ -20,7 +20,7 @@ namespace CraftableCartography.Items.Compass
         float headingDelta;
 
         float damping = 0.96f;
-        float accelerationMult = 6f;
+        float accelerationMult = 5.6f;
 
         long lastUpdate;
 
@@ -131,5 +131,21 @@ namespace CraftableCartography.Items.Compass
             
             return true;
         }
+        /*
+        public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
+        {
+            base.OnBeforeRender(capi, itemstack, target, ref renderinfo);
+
+            Shape shape = Vintagestory.API.Common.Shape.TryGet(api, Code);
+
+            shape.GetElementByName("needle").RotationY = heading;
+
+            MeshData compassMesh;
+
+            capi.Tesselator.TesselateShape(this, shape, out compassMesh);
+
+            renderinfo.ModelRef = capi.Render.UploadMultiTextureMesh(compassMesh);
+        }
+        */
     }
 }

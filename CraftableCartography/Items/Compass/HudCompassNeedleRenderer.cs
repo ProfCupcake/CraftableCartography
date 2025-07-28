@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CraftableCartography.Items.Compass
 {
@@ -56,13 +57,41 @@ namespace CraftableCartography.Items.Compass
 
             api.Event.RegisterRenderer(this, EnumRenderStage.Ortho);
 
+            PrepareMesh();
+        }
+
+        void PrepareMesh()
+        {
+            /*
             needleMeshData = new(3, 4, false, false, true, false);
 
-            needleMeshData.AddVertexSkipTex(-0.2f, 0, 0);
-            needleMeshData.AddVertexSkipTex(0.2f, 0, 0);
+            needleMeshData.AddVertexSkipTex(-0.1f, 0, 0);
+            needleMeshData.AddVertexSkipTex(0.1f, 0, 0);
             needleMeshData.AddVertexSkipTex(0, -1.5f, 0);
 
             needleMeshData.AddIndices(new int[] { 0, 1, 2, 0 });
+            */
+
+            needleMeshData = new(721, 720*6, false, false, true, false);
+
+            float lineWidth = 1.1f;
+
+            for (int i = 0; i < 359; i++)
+            {
+                double angle = i * (Math.PI / 180);
+                
+                float x = (float)Math.Sin(angle);
+                float y = (float)-Math.Cos(angle);
+
+                needleMeshData.AddVertexSkipTex(x, y, 0);
+                needleMeshData.AddVertexSkipTex(x * lineWidth, y * lineWidth, 0);
+
+                if (i > 0)
+                {
+                    needleMeshData.AddIndices(new int[] { (i * 2) - 2, (i * 2) - 1, (i * 2) + 0 });
+                    needleMeshData.AddIndices(new int[] { (i * 2) + 0, (i * 2) - 1, (i * 2) + 1 });
+                }
+            }
 
             if (needleMeshRef is null) needleMeshRef = api.Render.UploadMesh(needleMeshData);
             else api.Render.UpdateMesh(needleMeshRef, needleMeshData);
@@ -91,8 +120,11 @@ namespace CraftableCartography.Items.Compass
             shader.UniformMatrix("projectionMatrix", api.Render.CurrentProjectionMatrix);
 
             api.Render.GlPushMatrix();
-            api.Render.GlTranslate(api.Render.FrameWidth / 2, api.Render.FrameHeight / 2, 0);
-            api.Render.GlScale(36, 36, 0);
+            api.Render.GlTranslate(
+                api.Render.FrameWidth / 2,
+                api.Render.FrameHeight * 0.65f, 
+                0);
+            api.Render.GlScale(48, 48, 0);
             api.Render.GlRotate(compassAngle, 0, 0, 1);
             shader.UniformMatrix("modelViewMatrix", api.Render.CurrentModelviewMatrix);
             api.Render.GlPopMatrix();

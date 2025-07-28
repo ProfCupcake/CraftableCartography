@@ -2,6 +2,7 @@
 using System.Text;
 using System;
 using Vintagestory.API.Common;
+using Vintagestory.API.Server;
 
 namespace CraftableCartography.Config
 {
@@ -36,7 +37,25 @@ namespace CraftableCartography.Config
             this.api = api;
             this.logging = logging;
 
+            if (api.Side == EnumAppSide.Server)
+            {
+                ((ICoreServerAPI)api).Event.ServerSuspend += Event_ServerSuspend;
+                ((ICoreServerAPI)api).Event.ServerResume += Event_ServerResume;
+            }
+
             Reload();
+        }
+
+        private void Event_ServerResume()
+        {
+            SetWorldConfig();
+        }
+
+        private EnumSuspendState Event_ServerSuspend()
+        {
+            api.World.Config.RemoveAttribute(WorldConfigStringName);
+            Log("[{0}] cleared world config for save", new object[] { ConfigFilename });
+            return EnumSuspendState.Ready;
         }
 
         public void Reload()
@@ -71,13 +90,18 @@ namespace CraftableCartography.Config
                     }
                     else Log("[{0}] config loaded", new object[] { ConfigFilename });
 
-                    jsonConfig = JsonConvert.SerializeObject(_modConfig);
-                    jsonConfig = Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonConfig));
-                    api.World.Config.SetString(WorldConfigStringName, jsonConfig);
-                    Log("[{0}] set world config", new object[] { ConfigFilename });
+                    SetWorldConfig();
 
                     break;
             }
+        }
+
+        private void SetWorldConfig()
+        {
+            string jsonConfig = JsonConvert.SerializeObject(_modConfig);
+            jsonConfig = Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonConfig));
+            api.World.Config.SetString(WorldConfigStringName, jsonConfig);
+            Log("[{0}] set world config", new object[] { ConfigFilename });
         }
 
         private void Log(string message, object[] objects)

@@ -32,8 +32,8 @@ namespace CraftableCartography.Items.Compass
 
         private float compassAngle;
 
-        private MeshData needleMeshData;
-        private MeshRef needleMeshRef;
+        private MeshData[] meshDatas;
+        private MeshRef[] meshRefs;
 
         public double RenderOrder
         {
@@ -72,43 +72,107 @@ namespace CraftableCartography.Items.Compass
             needleMeshData.AddIndices(new int[] { 0, 1, 2, 0 });
             */
 
-            needleMeshData = new(721, 720*6, false, false, true, false);
+            meshDatas = new MeshData[37];
 
-            float lineWidth = 1.1f;
+            MeshData circleMeshData = new(720, 721*6, false, false, true, false);
 
-            for (int i = 0; i < 359; i++)
+            float circleWidth = 1.1f;
+
+            for (int i = 0; i < 360; i++)
             {
                 double angle = i * (Math.PI / 180);
                 
-                float x = (float)Math.Sin(angle);
-                float y = (float)-Math.Cos(angle);
+                float x = (float)Math.Sin(angle) * 2;
+                float y = (float)-Math.Cos(angle) * 2;
 
-                needleMeshData.AddVertexSkipTex(x, y, 0);
-                needleMeshData.AddVertexSkipTex(x * lineWidth, y * lineWidth, 0);
+                circleMeshData.AddVertexSkipTex(x, y, 0);
+                circleMeshData.AddVertexSkipTex(x * circleWidth, y * circleWidth, 0);
 
                 if (i > 0)
                 {
-                    needleMeshData.AddIndices(new int[] { (i * 2) - 2, (i * 2) - 1, (i * 2) + 0 });
-                    needleMeshData.AddIndices(new int[] { (i * 2) + 0, (i * 2) - 1, (i * 2) + 1 });
+                    circleMeshData.AddIndices(new int[] { (i * 2) - 2, (i * 2) - 1, (i * 2) + 0 });
+                    circleMeshData.AddIndices(new int[] { (i * 2) + 0, (i * 2) - 1, (i * 2) + 1 });
                 }
             }
 
-            if (needleMeshRef is null) needleMeshRef = api.Render.UploadMesh(needleMeshData);
-            else api.Render.UpdateMesh(needleMeshRef, needleMeshData);
+            circleMeshData.AddIndices(new int[] { 718, 719, 0 });
+            circleMeshData.AddIndices(new int[] { 0, 719, 1 });
+
+            meshDatas[0] = circleMeshData;
+
+            for (float i = 0; i < 359; i += 22.5f)
+            {
+                float baseWidth;
+
+                float baseRadius;
+
+                if (i == 0)
+                {
+                    baseRadius = 0.25f;
+                    baseWidth = 0.4f;
+                } else if (i % 90 == 0)
+                {
+                    baseRadius = 0.5f;
+                    baseWidth = 0.2f;
+                } else if (i % 45 == 0)
+                {
+                    baseRadius = 1f;
+                    baseWidth = 0.1f;
+                }
+                else
+                {
+                    baseRadius = 1.5f;
+                    baseWidth = 0.1f;
+                }
+
+                float tipRadius = 2f;
+
+                Vec3f p1 = new(baseWidth * -0.5f, 0, baseRadius);
+                Vec3f p2 = new(baseWidth * 0.5f, 0, baseRadius);
+                Vec3f p3 = new(0, 0, tipRadius);
+
+                p1 = p1.RotatedCopy(i + 180);
+                p2 = p2.RotatedCopy(i + 180);
+                p3 = p3.RotatedCopy(i + 180);
+
+                MeshData lineMesh = new(3, 3, false, false, true, false);
+
+                lineMesh.AddVertexSkipTex(p1.X, p1.Z, 0);
+                lineMesh.AddVertexSkipTex(p2.X, p2.Z, 0);
+                lineMesh.AddVertexSkipTex(p3.X, p3.Z, 0);
+
+                lineMesh.AddIndices(new int[] { 0, 1, 2 });
+
+                meshDatas[(int)((i/22.5) + 1)] = lineMesh;
+            }
+
+            if (meshRefs is null) meshRefs = new MeshRef[meshDatas.Length];
+
+            for (int i = 0; i < meshDatas.Length; i++)
+            {
+                if (meshDatas[i] is not null)
+                {
+                    if (meshRefs[i] is null) meshRefs[i] = api.Render.UploadMesh(meshDatas[i]);
+                    else api.Render.UpdateMesh(meshRefs[i], meshDatas[i]);
+                }
+            }
         }
 
         public void Dispose()
         {
-            if (needleMeshRef is not null)
+            if (meshRefs is not null)
             {
-                api.Render.DeleteMesh(needleMeshRef);
-                needleMeshRef = null;
+                foreach (MeshRef meshRef in meshRefs)
+                {
+                    api.Render.DeleteMesh(meshRef);
+                }
+                meshRefs = null;
             }
         }
 
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
-            if (needleMeshRef is null) return;
+            if (meshRefs is null) return;
             
             IShaderProgram shader = api.Render.CurrentActiveShader;
 
@@ -124,12 +188,15 @@ namespace CraftableCartography.Items.Compass
                 api.Render.FrameWidth / 2,
                 api.Render.FrameHeight * 0.65f, 
                 0);
-            api.Render.GlScale(48, 48, 0);
+            api.Render.GlScale(64, 64, 0);
             api.Render.GlRotate(compassAngle, 0, 0, 1);
             shader.UniformMatrix("modelViewMatrix", api.Render.CurrentModelviewMatrix);
             api.Render.GlPopMatrix();
 
-            api.Render.RenderMesh(needleMeshRef);
+            foreach (MeshRef meshRef in meshRefs)
+            {
+                if (meshRef is not null) api.Render.RenderMesh(meshRef);
+            }
         }
     }
 }

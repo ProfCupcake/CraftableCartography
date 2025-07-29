@@ -1,5 +1,5 @@
-New alternative mechanic. 
+- Added fancy new graphical compass display! Much better than just showing a numerical heading
 
-Instead of denying the opening of the (mini)map without the relevant items, it will instead simply not render the terrain. 
-
-This can be toggled in the config. 
+TODO
+- Implement zooming on scroll (also min/max zoom levels)
+- Disable text output for compass (make config option to re-enable?)

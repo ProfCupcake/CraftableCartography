@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.Client.NoObf;
 
@@ -26,6 +27,8 @@ namespace CraftableCartography.Items.Compass
             }
         }
 
+        public float compassZoom = 1f;
+
         private float compassAngle;
 
         private MeshData[] meshDatas;
@@ -35,7 +38,9 @@ namespace CraftableCartography.Items.Compass
         private MeshRef[] labelMeshRefs;
         private LoadedTexture[] labelTextures;
 
-        private int textureID;
+        private Item item;
+
+        private TextureAtlasPosition itemTexturePosition;
 
         public double RenderOrder
         {
@@ -53,26 +58,12 @@ namespace CraftableCartography.Items.Compass
             }
         }
 
-        public HudCompassNeedleRenderer(ICoreClientAPI api)
-        { 
-            Init(api, api.Render.GetOrLoadTexture("game:textures/block/ingot/tinbronze"));
-        }
-
-        public HudCompassNeedleRenderer(ICoreClientAPI api, string texturePath)
-        {
-            Init(api, api.Render.GetOrLoadTexture(texturePath));
-        }
-
-        
-        public HudCompassNeedleRenderer(ICoreClientAPI api, int textureID)
-        {
-            Init(api, textureID);
-        }
-
-        private void Init(ICoreClientAPI api, int textureID)
+        public HudCompassNeedleRenderer(ICoreClientAPI api, Item item)
         {
             this.api = api;
-            this.textureID = textureID;
+            this.item = item;
+
+            itemTexturePosition = api.ItemTextureAtlas.GetPosition(item, "tinbronze");
 
             api.Event.RegisterRenderer(this, EnumRenderStage.Ortho);
 
@@ -118,6 +109,8 @@ namespace CraftableCartography.Items.Compass
 
             circleMeshData.AddIndices(new int[] { 718, 719, 0 });
             circleMeshData.AddIndices(new int[] { 0, 719, 1 });
+
+            circleMeshData.SetTexPos(itemTexturePosition);
 
             meshDatas[0] = circleMeshData;
 
@@ -165,6 +158,8 @@ namespace CraftableCartography.Items.Compass
                 lineMesh.AddVertex(p3.X, p3.Z, 0, (p3.X / 4) + 0.5f, (p3.Z / 4) + 0.5f);
 
                 lineMesh.AddIndices(new int[] { 0, 1, 2 });
+
+                lineMesh.SetTexPos(itemTexturePosition);
 
                 meshDatas[(int)((i / 22.5) + 1)] = lineMesh;
 
@@ -247,7 +242,7 @@ namespace CraftableCartography.Items.Compass
             shader.NoTexture = 0f;
             shader.OverlayOpacity = 0f;
             shader.NormalShaded = 0;
-            shader.Tex2d2D = textureID;
+            shader.Tex2d2D = itemTexturePosition.atlasTextureId;
 
             shader.ProjectionMatrix = api.Render.CurrentProjectionMatrix;
 
@@ -262,7 +257,7 @@ namespace CraftableCartography.Items.Compass
             shader.UniformMatrix("projectionMatrix", api.Render.CurrentProjectionMatrix);
             */
 
-            float vPosM = 0.7f;
+            float vPosM = compassZoom;
             float scale = (api.Render.FrameHeight * (vPosM - 0.5f)) / 2;
             
             Matrixf viewMatrix = new(api.Render.CurrentModelviewMatrix);

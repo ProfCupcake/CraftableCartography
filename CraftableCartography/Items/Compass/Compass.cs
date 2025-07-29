@@ -7,6 +7,7 @@ using CraftableCartography.Items.Shared;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace CraftableCartography.Items.Compass
@@ -32,19 +33,26 @@ namespace CraftableCartography.Items.Compass
                 gui.TryOpen();
                 gui.SetText(GetText());
 
-                CompositeTexture compositeTexture;
-                if (Textures.TryGetValue("tinbronze", out compositeTexture))
-                {
-                    needleRenderer = new((ICoreClientAPI)byEntity.Api, compositeTexture.Base);
-                } else
-                {
-                    needleRenderer = new((ICoreClientAPI)byEntity.Api);
-                }
-
+                needleRenderer = new((ICoreClientAPI)byEntity.Api, this);
                 needleRenderer.heading = heading;
+
+                ((ICoreClientAPI)api).Event.KeyDown += Event_KeyDown;
             }
             
             handling = EnumHandHandling.PreventDefault;
+        }
+
+        private void Event_KeyDown(KeyEvent e)
+        {
+            if (e.KeyCode == (int)GlKeys.Up)
+            {
+                needleRenderer.compassZoom *= 1.1f;
+                e.Handled = true;
+            } else if (e.KeyCode == (int)GlKeys.Down)
+            {
+                needleRenderer.compassZoom *= 0.9f;
+                e.Handled = true;
+            }
         }
 
         private void DoMoveStep(Entity byEntity)
@@ -119,6 +127,8 @@ namespace CraftableCartography.Items.Compass
 
                 needleRenderer.Dispose();
                 needleRenderer = null;
+
+                ((ICoreClientAPI)api).Event.KeyDown -= Event_KeyDown;
             }
         }
 
@@ -139,6 +149,7 @@ namespace CraftableCartography.Items.Compass
             
             return true;
         }
+
         /*
         public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
         {

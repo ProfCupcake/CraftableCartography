@@ -32,7 +32,15 @@ namespace CraftableCartography.Items.Compass
                 gui.TryOpen();
                 gui.SetText(GetText());
 
-                needleRenderer = new((ICoreClientAPI)byEntity.Api);
+                CompositeTexture compositeTexture;
+                if (Textures.TryGetValue("tinbronze", out compositeTexture))
+                {
+                    needleRenderer = new((ICoreClientAPI)byEntity.Api, compositeTexture.Base);
+                } else
+                {
+                    needleRenderer = new((ICoreClientAPI)byEntity.Api);
+                }
+
                 needleRenderer.heading = heading;
             }
             

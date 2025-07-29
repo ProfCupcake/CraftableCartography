@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using HarmonyLib;
+using System;
 using Vintagestory.API.Client;
-using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Vintagestory.Client.NoObf;
 
 namespace CraftableCartography.Items.Compass
 {
-    internal class HudCompassNeedleRenderer : IRenderer
+    internal class HudCompassNeedleRenderer : IRenderer, IDisposable
     {
         ICoreClientAPI api;
 
@@ -35,6 +31,12 @@ namespace CraftableCartography.Items.Compass
         private MeshData[] meshDatas;
         private MeshRef[] meshRefs;
 
+        private MeshData[] labelMeshDatas;
+        private MeshRef[] labelMeshRefs;
+        private LoadedTexture[] labelTextures;
+
+        private int textureID;
+
         public double RenderOrder
         {
             get
@@ -43,7 +45,7 @@ namespace CraftableCartography.Items.Compass
             }
         }
 
-        public int RenderRange 
+        public int RenderRange
         {
             get
             {
@@ -52,8 +54,25 @@ namespace CraftableCartography.Items.Compass
         }
 
         public HudCompassNeedleRenderer(ICoreClientAPI api)
+        { 
+            Init(api, api.Render.GetOrLoadTexture("game:textures/block/ingot/tinbronze"));
+        }
+
+        public HudCompassNeedleRenderer(ICoreClientAPI api, string texturePath)
+        {
+            Init(api, api.Render.GetOrLoadTexture(texturePath));
+        }
+
+        
+        public HudCompassNeedleRenderer(ICoreClientAPI api, int textureID)
+        {
+            Init(api, textureID);
+        }
+
+        private void Init(ICoreClientAPI api, int textureID)
         {
             this.api = api;
+            this.textureID = textureID;
 
             api.Event.RegisterRenderer(this, EnumRenderStage.Ortho);
 
@@ -73,20 +92,22 @@ namespace CraftableCartography.Items.Compass
             */
 
             meshDatas = new MeshData[37];
+            labelMeshDatas = new MeshData[meshDatas.Length];
+            labelTextures = new LoadedTexture[meshDatas.Length];
 
-            MeshData circleMeshData = new(720, 721*6, false, false, true, false);
+            MeshData circleMeshData = new(720, 721 * 6, false, true, true, false);
 
             float circleWidth = 1.1f;
 
             for (int i = 0; i < 360; i++)
             {
                 double angle = i * (Math.PI / 180);
-                
+
                 float x = (float)Math.Sin(angle) * 2;
                 float y = (float)-Math.Cos(angle) * 2;
 
-                circleMeshData.AddVertexSkipTex(x, y, 0);
-                circleMeshData.AddVertexSkipTex(x * circleWidth, y * circleWidth, 0);
+                circleMeshData.AddVertex(x, y, 0, (x / 4.4f) + 0.5f, (y / 4.4f) + 0.5f);
+                circleMeshData.AddVertex(x * circleWidth, y * circleWidth, 0, ((x * circleWidth) / 4.4f) + 0.5f, ((y * circleWidth) / 4.4f) + 0.5f);
 
                 if (i > 0)
                 {
@@ -100,7 +121,7 @@ namespace CraftableCartography.Items.Compass
 
             meshDatas[0] = circleMeshData;
 
-            for (float i = 0; i < 359; i += 22.5f)
+            for (float i = 0; i < 360; i += 22.5f)
             {
                 float baseWidth;
 
@@ -110,11 +131,13 @@ namespace CraftableCartography.Items.Compass
                 {
                     baseRadius = 0.25f;
                     baseWidth = 0.4f;
-                } else if (i % 90 == 0)
+                }
+                else if (i % 90 == 0)
                 {
                     baseRadius = 0.5f;
                     baseWidth = 0.2f;
-                } else if (i % 45 == 0)
+                }
+                else if (i % 45 == 0)
                 {
                     baseRadius = 1f;
                     baseWidth = 0.1f;
@@ -135,18 +158,52 @@ namespace CraftableCartography.Items.Compass
                 p2 = p2.RotatedCopy(i + 180);
                 p3 = p3.RotatedCopy(i + 180);
 
-                MeshData lineMesh = new(3, 3, false, false, true, false);
+                MeshData lineMesh = new(3, 3, false, true, true, false);
 
-                lineMesh.AddVertexSkipTex(p1.X, p1.Z, 0);
-                lineMesh.AddVertexSkipTex(p2.X, p2.Z, 0);
-                lineMesh.AddVertexSkipTex(p3.X, p3.Z, 0);
+                lineMesh.AddVertex(p1.X, p1.Z, 0, (p1.X / 4) + 0.5f, (p1.Z / 4) + 0.5f);
+                lineMesh.AddVertex(p2.X, p2.Z, 0, (p2.X / 4) + 0.5f, (p2.Z / 4) + 0.5f);
+                lineMesh.AddVertex(p3.X, p3.Z, 0, (p3.X / 4) + 0.5f, (p3.Z / 4) + 0.5f);
 
                 lineMesh.AddIndices(new int[] { 0, 1, 2 });
 
-                meshDatas[(int)((i/22.5) + 1)] = lineMesh;
-            }
+                meshDatas[(int)((i / 22.5) + 1)] = lineMesh;
 
-            if (meshRefs is null) meshRefs = new MeshRef[meshDatas.Length];
+                LoadedTexture labelTexture = new(api);
+
+                float i_hdg = i + 180;
+                while (i_hdg >= 360) i_hdg -= 360;
+
+                string str = i_hdg == 0 ? "-N-" : i_hdg.ToString();
+                CairoFont font = CairoFont.WhiteDetailText().WithColor(new double[] { 0, 0, 0, 1 }).WithFontSize(28);
+                if (i_hdg == 0) font.FontWeight = Cairo.FontWeight.Bold;
+
+                api.Gui.TextTexture.GenOrUpdateTextTexture(str, font, ref labelTexture);
+
+                labelTextures[(int)(i / 22.5)] = labelTexture;
+
+                float labelHeight = 0.2f;
+                float labelXScale = labelTexture.Width / labelTexture.Height;
+
+                Vec3f lp1 = new(-labelHeight * labelXScale * 0.5f, 0, 2f + labelHeight);
+                Vec3f lp2 = new(labelHeight * labelXScale * 0.5f, 0, 2f);
+
+                //lp1 = lp1.RotatedCopy(i);
+                //lp2 = lp2.RotatedCopy(i);
+
+                MeshData labelMesh = new(4, 6, false, true, true, false);
+
+                labelMesh.AddVertex(lp1.X, lp1.Z, 0, 1, 0);
+                labelMesh.AddVertex(lp1.X, lp2.Z, 0, 1, 1);
+                labelMesh.AddVertex(lp2.X, lp2.Z, 0, 0, 1);
+                labelMesh.AddVertex(lp2.X, lp1.Z, 0, 0, 0);
+
+                labelMesh.AddIndices(0, 1, 2, 0, 2, 3);
+
+                labelMeshDatas[(int)(i / 22.5)] = labelMesh;
+            }
+            
+            meshRefs = new MeshRef[meshDatas.Length];
+            labelMeshRefs = new MeshRef[meshDatas.Length];
 
             for (int i = 0; i < meshDatas.Length; i++)
             {
@@ -154,6 +211,12 @@ namespace CraftableCartography.Items.Compass
                 {
                     if (meshRefs[i] is null) meshRefs[i] = api.Render.UploadMesh(meshDatas[i]);
                     else api.Render.UpdateMesh(meshRefs[i], meshDatas[i]);
+                }
+
+                if (labelMeshDatas[i] is not null)
+                {
+                    if (labelMeshRefs[i] is null) labelMeshRefs[i] = api.Render.UploadMesh(labelMeshDatas[i]);
+                    else api.Render.UpdateMesh(labelMeshRefs[i], labelMeshDatas[i]);
                 }
             }
         }
@@ -168,34 +231,70 @@ namespace CraftableCartography.Items.Compass
                 }
                 meshRefs = null;
             }
+
+            api.Event.UnregisterRenderer(this, EnumRenderStage.Ortho);
         }
 
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
             if (meshRefs is null) return;
-            
-            IShaderProgram shader = api.Render.CurrentActiveShader;
 
-            shader.Uniform("rgbaIn", new Vec4f(1,1,1,1));
+            ShaderProgramGui shader = api.Render.CurrentActiveShader as ShaderProgramGui;
+
+            shader.RgbaIn = ColorUtil.WhiteArgbVec;
+            shader.ExtraGlow = 0;
+            shader.ApplyColor = 0;
+            shader.NoTexture = 0f;
+            shader.OverlayOpacity = 0f;
+            shader.NormalShaded = 0;
+            shader.Tex2d2D = textureID;
+
+            shader.ProjectionMatrix = api.Render.CurrentProjectionMatrix;
+
+            /*
+            shader.Uniform("rgbaIn", ColorUtil.WhiteArgbVec);
             shader.Uniform("extraGlow", 0);
             shader.Uniform("applyColor", 0);
-            shader.Uniform("tex2d", 0);
-            shader.Uniform("noTexture", 1.0F);
+            shader.Uniform("noTexture", 0f);
+            shader.Uniform("overlayOpacity", 0f);
+            shader.Uniform("normalShaded", 0);
+            shader.BindTexture2D("tex2d", textureID, 0);
             shader.UniformMatrix("projectionMatrix", api.Render.CurrentProjectionMatrix);
+            */
 
-            api.Render.GlPushMatrix();
-            api.Render.GlTranslate(
+            float vPosM = 0.7f;
+            float scale = (api.Render.FrameHeight * (vPosM - 0.5f)) / 2;
+            
+            Matrixf viewMatrix = new(api.Render.CurrentModelviewMatrix);
+            viewMatrix.Translate(
                 api.Render.FrameWidth / 2,
-                api.Render.FrameHeight * 0.65f, 
-                0);
-            api.Render.GlScale(64, 64, 0);
-            api.Render.GlRotate(compassAngle, 0, 0, 1);
-            shader.UniformMatrix("modelViewMatrix", api.Render.CurrentModelviewMatrix);
-            api.Render.GlPopMatrix();
+                api.Render.FrameHeight * vPosM,
+                10)
+                .Scale(scale, scale, 0)
+                .RotateZDeg(compassAngle);
+
+            shader.ModelViewMatrix = viewMatrix.Values;
+            //shader.UniformMatrix("modelViewMatrix", viewMatrix.Values);
 
             foreach (MeshRef meshRef in meshRefs)
             {
                 if (meshRef is not null) api.Render.RenderMesh(meshRef);
+            }
+
+            shader.NoTexture = 0f;
+            //shader.Uniform("noTexture", 0f);
+
+            for (int i = 0; i < meshRefs.Length; i++)
+            {
+                if (labelMeshRefs[i] is not null)
+                {
+                    //shader.BindTexture2D("tex2d", labelTextures[i].TextureId, 0);
+                    shader.Tex2d2D = labelTextures[i].TextureId;
+                    api.Render.RenderMesh(labelMeshRefs[i]);
+                    viewMatrix.RotateZDeg(22.5f);
+                    //shader.UniformMatrix("modelViewMatrix", viewMatrix.Values);
+                    shader.ModelViewMatrix = viewMatrix.Values;
+                }
             }
         }
     }

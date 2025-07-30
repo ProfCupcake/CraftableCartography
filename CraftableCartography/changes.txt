@@ -1,5 +1,1 @@
-New alternative mechanic. 
-
-Instead of denying the opening of the (mini)map without the relevant items, it will instead simply not render the terrain. 
-
-This can be toggled in the config. 
+Added fancy new graphical compass display! Much better than just showing a numerical heading

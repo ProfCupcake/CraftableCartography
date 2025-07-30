@@ -11,23 +11,10 @@
       "type": "item",
       "code": "game:nugget-*"
     },
-    "B": {
-      "type": "block",
-      "code": "game:bowl-*-fired"
-    },
     "P": {
       "type": "item",
       "code": "compassframe-*",
       "name": "frame"
-    }
-  },
-  "attributes": {
-    "liquidContainerProps": {
-      "requiresContent": {
-        "type": "item",
-        "code": "waterportion"
-      },
-      "requiresLitres": 1
     }
   },
   "output": {

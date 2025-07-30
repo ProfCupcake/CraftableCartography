@@ -2,6 +2,7 @@
 {
     public class CraftableCartographyModConfig
     {
-        public bool AllowMapOpeningWithoutTool = false;
+        public bool AllowMapOpeningWithoutTool = true;
+        public bool CompassTextBox = false;
     }
 }

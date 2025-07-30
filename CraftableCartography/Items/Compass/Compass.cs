@@ -7,19 +7,27 @@ using CraftableCartography.Items.Shared;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
+using HarmonyLib;
+using Vintagestory.Client.NoObf;
+using Vintagestory.GameContent;
+using CraftableCartography.Patches;
 
 namespace CraftableCartography.Items.Compass
 {
     public class Compass : Item
     {
+        ICoreClientAPI capi;
+        
         HudElementNavReading gui;
+        HudCompassNeedleRenderer needleRenderer;
 
         float heading;
         float headingDelta;
 
-        float damping = 0.92f;
-        float accelerationMult = 4f;
+        float damping = 0.96f;
+        float accelerationMult = 5.6f;
 
         long lastUpdate;
 
@@ -27,12 +35,43 @@ namespace CraftableCartography.Items.Compass
         {
             if (byEntity.Api.Side == EnumAppSide.Client)
             {
-                gui ??= new((ICoreClientAPI)byEntity.Api);
-                gui.TryOpen();
-                gui.SetText(GetText());
+                capi ??= byEntity.Api as ICoreClientAPI;
+
+                if (api.ModLoader.GetModSystem<CraftableCartographyModSystem>().Config.modConfig.CompassTextBox)
+                {
+                    gui ??= new(capi);
+                    gui.TryOpen();
+                    gui.SetText(GetText());
+                }
+
+                needleRenderer = new(capi, this);
+                needleRenderer.heading = heading;
+
+                capi.Event.KeyDown += Event_KeyDown;
+
+                HudToolbarPatches.OnMouseWheel += HudToolbarPatches_OnMouseWheel;
             }
             
             handling = EnumHandHandling.PreventDefault;
+        }
+
+        private void HudToolbarPatches_OnMouseWheel(ref MouseWheelEventArgs args)
+        {
+            needleRenderer.compassZoom += (needleRenderer.compassZoom * 0.02f * args.deltaPrecise);
+            args.SetHandled(true);
+        }
+
+        private void Event_KeyDown(KeyEvent e)
+        {
+            if (e.KeyCode == (int)GlKeys.Up)
+            {
+                needleRenderer.compassZoom *= 1.02f;
+                e.Handled = true;
+            } else if (e.KeyCode == (int)GlKeys.Down)
+            {
+                needleRenderer.compassZoom *= 0.98f;
+                e.Handled = true;
+            }
         }
 
         private void DoMoveStep(Entity byEntity)
@@ -91,7 +130,9 @@ namespace CraftableCartography.Items.Compass
             {
                 DoMoveStep(byEntity);
 
-                gui.SetText(GetText());
+                gui?.SetText(GetText());
+
+                needleRenderer.heading = heading;
             }
 
             return true;
@@ -100,7 +141,16 @@ namespace CraftableCartography.Items.Compass
         public override void OnHeldInteractStop(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
         {
             if (byEntity.Api.Side == EnumAppSide.Client)
-                gui.TryClose();
+            {
+                gui?.TryClose();
+
+                needleRenderer.Dispose();
+                needleRenderer = null;
+
+                ((ICoreClientAPI)api).Event.KeyDown -= Event_KeyDown;
+
+                HudToolbarPatches.OnMouseWheel -= HudToolbarPatches_OnMouseWheel;
+            }
         }
 
         public override void OnHeldIdle(ItemSlot slot, EntityAgent byEntity)
@@ -120,5 +170,22 @@ namespace CraftableCartography.Items.Compass
             
             return true;
         }
+
+        /*
+        public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
+        {
+            base.OnBeforeRender(capi, itemstack, target, ref renderinfo);
+
+            Shape shape = Vintagestory.API.Common.Shape.TryGet(api, Code);
+
+            shape.GetElementByName("needle").RotationY = heading;
+
+            MeshData compassMesh;
+
+            capi.Tesselator.TesselateShape(this, shape, out compassMesh);
+
+            renderinfo.ModelRef = capi.Render.UploadMultiTextureMesh(compassMesh);
+        }
+        */
     }
 }

@@ -6,7 +6,7 @@
         "Professor Cupcake"
     ],
     "description": "A more immersive map & navigation experience",
-    "version": "0.2.11",
+    "version": "0.2.12",
     "dependencies": {
         "game": "*"
     }

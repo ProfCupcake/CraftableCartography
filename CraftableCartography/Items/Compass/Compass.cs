@@ -9,11 +9,17 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
+using HarmonyLib;
+using Vintagestory.Client.NoObf;
+using Vintagestory.GameContent;
+using CraftableCartography.Patches;
 
 namespace CraftableCartography.Items.Compass
 {
     public class Compass : Item
     {
+        ICoreClientAPI capi;
+        
         HudElementNavReading gui;
         HudCompassNeedleRenderer needleRenderer;
 
@@ -29,28 +35,38 @@ namespace CraftableCartography.Items.Compass
         {
             if (byEntity.Api.Side == EnumAppSide.Client)
             {
-                gui ??= new((ICoreClientAPI)byEntity.Api);
+                capi ??= byEntity.Api as ICoreClientAPI;
+
+                gui ??= new(capi);
                 gui.TryOpen();
                 gui.SetText(GetText());
 
-                needleRenderer = new((ICoreClientAPI)byEntity.Api, this);
+                needleRenderer = new(capi, this);
                 needleRenderer.heading = heading;
 
-                ((ICoreClientAPI)api).Event.KeyDown += Event_KeyDown;
+                capi.Event.KeyDown += Event_KeyDown;
+
+                HudToolbarPatches.OnMouseWheel += HudToolbarPatches_OnMouseWheel;
             }
             
             handling = EnumHandHandling.PreventDefault;
+        }
+
+        private void HudToolbarPatches_OnMouseWheel(ref MouseWheelEventArgs args)
+        {
+            needleRenderer.compassZoom += (needleRenderer.compassZoom * 0.02f * args.deltaPrecise);
+            args.SetHandled(true);
         }
 
         private void Event_KeyDown(KeyEvent e)
         {
             if (e.KeyCode == (int)GlKeys.Up)
             {
-                needleRenderer.compassZoom *= 1.1f;
+                needleRenderer.compassZoom *= 1.02f;
                 e.Handled = true;
             } else if (e.KeyCode == (int)GlKeys.Down)
             {
-                needleRenderer.compassZoom *= 0.9f;
+                needleRenderer.compassZoom *= 0.98f;
                 e.Handled = true;
             }
         }
@@ -129,6 +145,8 @@ namespace CraftableCartography.Items.Compass
                 needleRenderer = null;
 
                 ((ICoreClientAPI)api).Event.KeyDown -= Event_KeyDown;
+
+                HudToolbarPatches.OnMouseWheel -= HudToolbarPatches_OnMouseWheel;
             }
         }
 

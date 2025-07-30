@@ -27,7 +27,19 @@ namespace CraftableCartography.Items.Compass
             }
         }
 
-        public float compassZoom = 1f;
+        private float _compassZoom;
+
+        public float compassZoom
+        {
+            get
+            {
+                return _compassZoom;
+            }
+            set
+            {
+                _compassZoom = Math.Clamp(value, 0.7f, 1.3f);
+            }
+        }
 
         private float compassAngle;
 
@@ -68,6 +80,8 @@ namespace CraftableCartography.Items.Compass
             api.Event.RegisterRenderer(this, EnumRenderStage.Ortho);
 
             PrepareMesh();
+
+            compassZoom = 0.7f;
         }
 
         void PrepareMesh()
@@ -82,7 +96,7 @@ namespace CraftableCartography.Items.Compass
             needleMeshData.AddIndices(new int[] { 0, 1, 2, 0 });
             */
 
-            meshDatas = new MeshData[37];
+            meshDatas = new MeshData[33];
             labelMeshDatas = new MeshData[meshDatas.Length];
             labelTextures = new LoadedTexture[meshDatas.Length];
 
@@ -114,7 +128,9 @@ namespace CraftableCartography.Items.Compass
 
             meshDatas[0] = circleMeshData;
 
-            for (float i = 0; i < 360; i += 22.5f)
+            int j = 1;
+            int k = 0;
+            for (float i = 0; i < 360; i += 11.25f)
             {
                 float baseWidth;
 
@@ -135,10 +151,14 @@ namespace CraftableCartography.Items.Compass
                     baseRadius = 1f;
                     baseWidth = 0.1f;
                 }
-                else
+                else if (i % 22.5 == 0)
                 {
                     baseRadius = 1.5f;
                     baseWidth = 0.1f;
+                } else
+                {
+                    baseRadius = 1.75f;
+                    baseWidth = 0.05f;
                 }
 
                 float tipRadius = 2f;
@@ -161,40 +181,53 @@ namespace CraftableCartography.Items.Compass
 
                 lineMesh.SetTexPos(itemTexturePosition);
 
-                meshDatas[(int)((i / 22.5) + 1)] = lineMesh;
+                meshDatas[j] = lineMesh;
+                j++;
 
-                LoadedTexture labelTexture = new(api);
+                if (i % 22.5 == 0)
+                {
+                    LoadedTexture labelTexture = new(api);
 
-                float i_hdg = i + 180;
-                while (i_hdg >= 360) i_hdg -= 360;
+                    float i_hdg = i + 180;
+                    while (i_hdg >= 360) i_hdg -= 360;
 
-                string str = i_hdg == 0 ? "-N-" : i_hdg.ToString();
-                CairoFont font = CairoFont.WhiteDetailText().WithColor(new double[] { 0, 0, 0, 1 }).WithFontSize(28);
-                if (i_hdg == 0) font.FontWeight = Cairo.FontWeight.Bold;
+                    string str = i_hdg == 0 ? "-N-" : i_hdg.ToString();
+                    CairoFont font = CairoFont.WhiteDetailText()
+                        .WithColor(new double[] { 1, 1, 1, 1 })
+                        .WithFontSize(30)
+                        .WithStroke(new double[] { 0, 0, 0, 1 }, 2);
+                    if (i_hdg == 0)
+                    {
+                        font.FontWeight = Cairo.FontWeight.Bold;
+                        font.Color = new double[] { 1, 0, 0, 1 };
+                        font.StrokeWidth = 0;
+                    }
+                    
+                    api.Gui.TextTexture.GenOrUpdateTextTexture(str, font, ref labelTexture);
 
-                api.Gui.TextTexture.GenOrUpdateTextTexture(str, font, ref labelTexture);
+                    labelTextures[k] = labelTexture;
 
-                labelTextures[(int)(i / 22.5)] = labelTexture;
+                    float labelHeight = 0.2f;
+                    float labelXScale = labelTexture.Width / labelTexture.Height;
 
-                float labelHeight = 0.2f;
-                float labelXScale = labelTexture.Width / labelTexture.Height;
+                    Vec3f lp1 = new(-labelHeight * labelXScale * 0.5f, 0, 2f + labelHeight);
+                    Vec3f lp2 = new(labelHeight * labelXScale * 0.5f, 0, 2f);
 
-                Vec3f lp1 = new(-labelHeight * labelXScale * 0.5f, 0, 2f + labelHeight);
-                Vec3f lp2 = new(labelHeight * labelXScale * 0.5f, 0, 2f);
+                    //lp1 = lp1.RotatedCopy(i);
+                    //lp2 = lp2.RotatedCopy(i);
 
-                //lp1 = lp1.RotatedCopy(i);
-                //lp2 = lp2.RotatedCopy(i);
+                    MeshData labelMesh = new(4, 6, false, true, true, false);
 
-                MeshData labelMesh = new(4, 6, false, true, true, false);
+                    labelMesh.AddVertex(lp1.X, lp1.Z, 0, 1, 0);
+                    labelMesh.AddVertex(lp1.X, lp2.Z, 0, 1, 1);
+                    labelMesh.AddVertex(lp2.X, lp2.Z, 0, 0, 1);
+                    labelMesh.AddVertex(lp2.X, lp1.Z, 0, 0, 0);
 
-                labelMesh.AddVertex(lp1.X, lp1.Z, 0, 1, 0);
-                labelMesh.AddVertex(lp1.X, lp2.Z, 0, 1, 1);
-                labelMesh.AddVertex(lp2.X, lp2.Z, 0, 0, 1);
-                labelMesh.AddVertex(lp2.X, lp1.Z, 0, 0, 0);
+                    labelMesh.AddIndices(0, 1, 2, 0, 2, 3);
 
-                labelMesh.AddIndices(0, 1, 2, 0, 2, 3);
-
-                labelMeshDatas[(int)(i / 22.5)] = labelMesh;
+                    labelMeshDatas[k] = labelMesh;
+                    k++;
+                }
             }
             
             meshRefs = new MeshRef[meshDatas.Length];

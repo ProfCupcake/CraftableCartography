@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using System;
+using System.Reflection.Metadata.Ecma335;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -54,6 +55,14 @@ namespace CraftableCartography.Items.Compass
 
         private TextureAtlasPosition itemTexturePosition;
 
+        private bool isPrimitive
+        {
+            get
+            {
+                return item.Code.FirstCodePart() == "compassprimitive";
+            }
+        }
+
         public double RenderOrder
         {
             get
@@ -100,38 +109,46 @@ namespace CraftableCartography.Items.Compass
             labelMeshDatas = new MeshData[meshDatas.Length];
             labelTextures = new LoadedTexture[meshDatas.Length];
 
-            MeshData circleMeshData = new(720, 721 * 6, false, true, true, false);
-
-            float circleWidth = 1.1f;
-
-            for (int i = 0; i < 360; i++)
+            if (!isPrimitive)
             {
-                double angle = i * (Math.PI / 180);
+                MeshData circleMeshData = new(720, 721 * 6, false, true, true, false);
 
-                float x = (float)Math.Sin(angle) * 2;
-                float y = (float)-Math.Cos(angle) * 2;
+                float circleWidth = 1.1f;
 
-                circleMeshData.AddVertex(x, y, 0, (x / 4.4f) + 0.5f, (y / 4.4f) + 0.5f);
-                circleMeshData.AddVertex(x * circleWidth, y * circleWidth, 0, ((x * circleWidth) / 4.4f) + 0.5f, ((y * circleWidth) / 4.4f) + 0.5f);
-
-                if (i > 0)
+                for (int i = 0; i < 360; i++)
                 {
-                    circleMeshData.AddIndices(new int[] { (i * 2) - 2, (i * 2) - 1, (i * 2) + 0 });
-                    circleMeshData.AddIndices(new int[] { (i * 2) + 0, (i * 2) - 1, (i * 2) + 1 });
+                    double angle = i * (Math.PI / 180);
+
+                    float x = (float)Math.Sin(angle) * 2;
+                    float y = (float)-Math.Cos(angle) * 2;
+
+                    circleMeshData.AddVertex(x, y, 0, (x / 4.4f) + 0.5f, (y / 4.4f) + 0.5f);
+                    circleMeshData.AddVertex(x * circleWidth, y * circleWidth, 0, ((x * circleWidth) / 4.4f) + 0.5f, ((y * circleWidth) / 4.4f) + 0.5f);
+
+                    if (i > 0)
+                    {
+                        circleMeshData.AddIndices(new int[] { (i * 2) - 2, (i * 2) - 1, (i * 2) + 0 });
+                        circleMeshData.AddIndices(new int[] { (i * 2) + 0, (i * 2) - 1, (i * 2) + 1 });
+                    }
                 }
+
+                circleMeshData.AddIndices(new int[] { 718, 719, 0 });
+                circleMeshData.AddIndices(new int[] { 0, 719, 1 });
+
+                circleMeshData.SetTexPos(itemTexturePosition);
+
+                meshDatas[0] = circleMeshData;
             }
-
-            circleMeshData.AddIndices(new int[] { 718, 719, 0 });
-            circleMeshData.AddIndices(new int[] { 0, 719, 1 });
-
-            circleMeshData.SetTexPos(itemTexturePosition);
-
-            meshDatas[0] = circleMeshData;
 
             int j = 1;
             int k = 0;
             for (float i = 0; i < 360; i += 11.25f)
             {
+                if (isPrimitive)
+                {
+                    if (i != 0) continue;
+                }
+
                 float baseWidth;
 
                 float baseRadius;
@@ -184,49 +201,52 @@ namespace CraftableCartography.Items.Compass
                 meshDatas[j] = lineMesh;
                 j++;
 
-                if (i % 22.5 == 0)
+                if (!isPrimitive)
                 {
-                    LoadedTexture labelTexture = new(api);
-
-                    float i_hdg = i + 180;
-                    while (i_hdg >= 360) i_hdg -= 360;
-
-                    string str = i_hdg == 0 ? "-N-" : i_hdg.ToString();
-                    CairoFont font = CairoFont.WhiteDetailText()
-                        .WithColor(new double[] { 1, 1, 1, 1 })
-                        .WithFontSize(32)
-                        .WithStroke(new double[] { 0, 0, 0, 1 }, 2);
-                    if (i_hdg == 0)
+                    if (i % 22.5 == 0)
                     {
-                        font.FontWeight = Cairo.FontWeight.Bold;
-                        font.Color = new double[] { 1, 0, 0, 1 };
-                        font.StrokeWidth = 0;
+                        LoadedTexture labelTexture = new(api);
+
+                        float i_hdg = i + 180;
+                        while (i_hdg >= 360) i_hdg -= 360;
+
+                        string str = i_hdg == 0 ? "-N-" : i_hdg.ToString();
+                        CairoFont font = CairoFont.WhiteDetailText()
+                            .WithColor(new double[] { 1, 1, 1, 1 })
+                            .WithFontSize(32)
+                            .WithStroke(new double[] { 0, 0, 0, 1 }, 2);
+                        if (i_hdg == 0)
+                        {
+                            font.FontWeight = Cairo.FontWeight.Bold;
+                            font.Color = new double[] { 1, 0, 0, 1 };
+                            font.StrokeWidth = 0;
+                        }
+
+                        api.Gui.TextTexture.GenOrUpdateTextTexture(str, font, ref labelTexture);
+
+                        labelTextures[k] = labelTexture;
+
+                        float labelHeight = 0.2f;
+                        float labelXScale = labelTexture.Width / labelTexture.Height;
+
+                        Vec3f lp1 = new(-labelHeight * labelXScale * 0.5f, 0, 2f + labelHeight);
+                        Vec3f lp2 = new(labelHeight * labelXScale * 0.5f, 0, 2f);
+
+                        //lp1 = lp1.RotatedCopy(i);
+                        //lp2 = lp2.RotatedCopy(i);
+
+                        MeshData labelMesh = new(4, 6, false, true, true, false);
+
+                        labelMesh.AddVertex(lp1.X, lp1.Z, 0, 1, 0);
+                        labelMesh.AddVertex(lp1.X, lp2.Z, 0, 1, 1);
+                        labelMesh.AddVertex(lp2.X, lp2.Z, 0, 0, 1);
+                        labelMesh.AddVertex(lp2.X, lp1.Z, 0, 0, 0);
+
+                        labelMesh.AddIndices(0, 1, 2, 0, 2, 3);
+
+                        labelMeshDatas[k] = labelMesh;
+                        k++;
                     }
-                    
-                    api.Gui.TextTexture.GenOrUpdateTextTexture(str, font, ref labelTexture);
-
-                    labelTextures[k] = labelTexture;
-
-                    float labelHeight = 0.2f;
-                    float labelXScale = labelTexture.Width / labelTexture.Height;
-
-                    Vec3f lp1 = new(-labelHeight * labelXScale * 0.5f, 0, 2f + labelHeight);
-                    Vec3f lp2 = new(labelHeight * labelXScale * 0.5f, 0, 2f);
-
-                    //lp1 = lp1.RotatedCopy(i);
-                    //lp2 = lp2.RotatedCopy(i);
-
-                    MeshData labelMesh = new(4, 6, false, true, true, false);
-
-                    labelMesh.AddVertex(lp1.X, lp1.Z, 0, 1, 0);
-                    labelMesh.AddVertex(lp1.X, lp2.Z, 0, 1, 1);
-                    labelMesh.AddVertex(lp2.X, lp2.Z, 0, 0, 1);
-                    labelMesh.AddVertex(lp2.X, lp1.Z, 0, 0, 0);
-
-                    labelMesh.AddIndices(0, 1, 2, 0, 2, 3);
-
-                    labelMeshDatas[k] = labelMesh;
-                    k++;
                 }
             }
             

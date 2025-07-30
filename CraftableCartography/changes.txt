@@ -1,5 +1,1 @@
-- Added fancy new graphical compass display! Much better than just showing a numerical heading
-
-TODO
-- Background for compass? 
-- Disable text output for compass (make config option to re-enable?)
+Added fancy new graphical compass display! Much better than just showing a numerical heading

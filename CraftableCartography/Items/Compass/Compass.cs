@@ -37,9 +37,12 @@ namespace CraftableCartography.Items.Compass
             {
                 capi ??= byEntity.Api as ICoreClientAPI;
 
-                gui ??= new(capi);
-                gui.TryOpen();
-                gui.SetText(GetText());
+                if (api.ModLoader.GetModSystem<CraftableCartographyModSystem>().Config.modConfig.CompassTextBox)
+                {
+                    gui ??= new(capi);
+                    gui.TryOpen();
+                    gui.SetText(GetText());
+                }
 
                 needleRenderer = new(capi, this);
                 needleRenderer.heading = heading;
@@ -127,7 +130,7 @@ namespace CraftableCartography.Items.Compass
             {
                 DoMoveStep(byEntity);
 
-                gui.SetText(GetText());
+                gui?.SetText(GetText());
 
                 needleRenderer.heading = heading;
             }
@@ -139,7 +142,7 @@ namespace CraftableCartography.Items.Compass
         {
             if (byEntity.Api.Side == EnumAppSide.Client)
             {
-                gui.TryClose();
+                gui?.TryClose();
 
                 needleRenderer.Dispose();
                 needleRenderer = null;

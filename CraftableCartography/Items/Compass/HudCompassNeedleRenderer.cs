@@ -194,7 +194,7 @@ namespace CraftableCartography.Items.Compass
                     string str = i_hdg == 0 ? "-N-" : i_hdg.ToString();
                     CairoFont font = CairoFont.WhiteDetailText()
                         .WithColor(new double[] { 1, 1, 1, 1 })
-                        .WithFontSize(30)
+                        .WithFontSize(32)
                         .WithStroke(new double[] { 0, 0, 0, 1 }, 2);
                     if (i_hdg == 0)
                     {

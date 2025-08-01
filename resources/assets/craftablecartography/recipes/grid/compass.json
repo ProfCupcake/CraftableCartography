@@ -1,6 +1,6 @@
 {
-  "ingredientPattern": "G_,N_,PB",
-  "width": 2,
+  "ingredientPattern": "G,N,P",
+  "width": 1,
   "height": 3,
   "ingredients": {
     "G": {

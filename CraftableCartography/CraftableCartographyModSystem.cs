@@ -1,11 +1,9 @@
 ﻿using CraftableCartography.Config;
 using CraftableCartography.Items.Compass;
 using CraftableCartography.Items.Sextant;
-using CraftableCartography.Lib;
 using HarmonyLib;
 using Newtonsoft.Json;
 using ProtoBuf;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,7 +21,7 @@ namespace CraftableCartography
     public partial class CraftableCartographyModSystem : ModSystem
     {
         public ConfigManager<CraftableCartographyModConfig> Config;
-        
+
         private string dataPath;
 
         public const string patchName = "com.profcupcake.craftablecartography";
@@ -88,14 +86,15 @@ namespace CraftableCartography
             int y = (int)args[1];
             int z = (int)args[2];
 
-            BlockPos pos = new BlockPos(x,y,z);
+            BlockPos pos = new BlockPos(x, y, z);
 
             pos.Add(api.World.DefaultSpawnPosition.AsBlockPos);
-            
+
             if (AddLastReadingToMap((IServerPlayer)args.Caller.Player, pos))
             {
                 return TextCommandResult.Success($"Added last ProPick reading to map at {x}, {y}, {z}");
-            } else
+            }
+            else
             {
                 return TextCommandResult.Error("No reading to add!");
             }
@@ -108,7 +107,7 @@ namespace CraftableCartography
                 if (player.ConnectionState != EnumClientState.Playing || player.Entity == null) continue;
 
                 player.Entity.WatchedAttributes.SetBool(hasJPSAttr, HasJPS(player));
-            }    
+            }
         }
 
         public override void StartClientSide(ICoreClientAPI api)
@@ -131,7 +130,7 @@ namespace CraftableCartography
                 .HandleWith(SetChannelCommand);
         }
 
-        [ProtoContract(ImplicitFields=ImplicitFields.AllFields)]
+        [ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
         public class SetChannelPacket
         {
             public string channel;
@@ -142,7 +141,7 @@ namespace CraftableCartography
             string setchannel;
             if (args[0] != null) setchannel = ((string)args[0]).ToLower();
             else setchannel = "";
-            
+
             capi.Network.GetChannel(NetChannel).SendPacket<SetChannelPacket>(new() { channel = setchannel });
 
             return TextCommandResult.Success();

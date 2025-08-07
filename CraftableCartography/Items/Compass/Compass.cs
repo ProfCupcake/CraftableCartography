@@ -160,12 +160,9 @@ namespace CraftableCartography.Items.Compass
 
         public override bool ConsumeCraftingIngredients(ItemSlot[] slots, ItemSlot outputSlot, GridRecipe matchingRecipe)
         {
-            if (Code.FirstCodePart() == "compassprimitive")
+            foreach (ItemSlot slot in slots)
             {
-                foreach (ItemSlot slot in slots)
-                {
-                    slot.TakeOut(1);
-                }
+                slot.TakeOut(1);
             }
             
             return true;
